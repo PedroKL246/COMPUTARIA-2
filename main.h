@@ -4,7 +4,7 @@
 #include <math.h>
 
 #define MAX_SAMPLES 1000
-#define FEATURES 5            // Num de colunas
+#define FEATURES 4            // Num de colunas
 #define K 5                     // numero K no KNN
 
 typedef struct {

@@ -27,19 +27,34 @@ void loadCSV(const char *filename) {
         exit(1);
     }
 
-    char line[1024];
+    char line[10000];  // Aumentado para suportar muitas colunas
     while (fgets(line, sizeof(line), file)) {
         char *token;
-        token = strtok(line, ",");
         int feature_index = 0;
 
-        while (token != NULL && feature_index < FEATURES) {
-            dataset[total_samples].features[feature_index++] = atof(token);
+        token = strtok(line, ",");
+
+        // Ler todas as features
+        while (token != NULL) {
+            if (feature_index < FEATURES) {
+                dataset[total_samples].features[feature_index++] = atof(token);
+            }
             token = strtok(NULL, ",");
         }
 
-        if (token != NULL) {
-            dataset[total_samples].label = token[0];  // Assume 'P' ou 'H'
+        // O último token lido na linha é o label
+        char *last_comma = strrchr(line, ',');
+        if (last_comma != NULL) {
+            char label_char = *(last_comma + 1);
+            if (label_char == 'P' || label_char == 'H') {
+                dataset[total_samples].label = label_char;
+            } else {
+                // Proteção para casos de label com quebra de linha
+                dataset[total_samples].label = label_char;
+            }
+        } else {
+            printf("Erro ao ler label na linha %d\n", total_samples + 1);
+            exit(1);
         }
 
         total_samples++;
@@ -95,6 +110,10 @@ int compare(const void *a, const void *b) {
 
 // Função KNN
 char classify(DataPoint test_point, DataPoint *data, int size) {
+    double weightP = 0;
+    double weightH = 0;
+    double epsilon = 1e-6;
+
     Neighbor neighbors[size];
 
     for (int i = 0; i < size; i++) {
@@ -102,15 +121,15 @@ char classify(DataPoint test_point, DataPoint *data, int size) {
         neighbors[i].label = data[i].label;
     }
 
-    qsort(neighbors, (size_t)size, sizeof(Neighbor), compare);
+    qsort(neighbors, size, sizeof(Neighbor), compare);
 
-    int countP = 0, countH = 0;
     for (int i = 0; i < K; i++) {
-        if (neighbors[i].label == 'P') countP++;
-        else if (neighbors[i].label == 'H') countH++;
+        double weight = 1.0 / (neighbors[i].distance + epsilon);
+        if (neighbors[i].label == 'P') weightP += weight;
+        else if (neighbors[i].label == 'H') weightH += weight;
     }
 
-    return (countP > countH) ? 'P' : 'H';
+    return (weightP > weightH) ? 'P' : 'H';
 }
 
 // Avaliação de acurácia (Leave-One-Out)
