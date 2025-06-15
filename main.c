@@ -1,19 +1,52 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-
-#define MAX_SAMPLES 1000
-#define FEATURES 5  // Ajuste aqui para o número de colunas de features
-#define K 5         // Valor de K no KNN
-
-typedef struct {
-    double features[FEATURES];
-    char label;  // 'P' ou 'H'
-} DataPoint;
+#include "main.h"
 
 DataPoint dataset[MAX_SAMPLES];
 int total_samples = 0;
+
+// Função Principal
+int main(void)
+{
+    loadCSV("DARWIN.csv");
+
+    printf("Total de amostras carregadas: %d\n", total_samples);
+
+    double min[FEATURES], max[FEATURES];
+    computeMinMax(dataset, total_samples, min, max);
+    normalize(dataset, total_samples, min, max);
+
+    evaluateModel();
+
+    return 0;
+}
+
+// Load CSV
+void loadCSV(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        printf("Erro ao abrir o arquivo.\n");
+        exit(1);
+    }
+
+    char line[1024];
+    while (fgets(line, sizeof(line), file)) {
+        char *token;
+        token = strtok(line, ",");
+        int feature_index = 0;
+
+        while (token != NULL && feature_index < FEATURES) {
+            dataset[total_samples].features[feature_index++] = atof(token);
+            token = strtok(NULL, ",");
+        }
+
+        if (token != NULL) {
+            dataset[total_samples].label = token[0];  // Assume 'P' ou 'H'
+        }
+
+        total_samples++;
+    }
+
+    fclose(file);
+}
 
 // Funções para Normalização
 void computeMinMax(DataPoint *data, int size, double *min, double *max) {
@@ -69,7 +102,7 @@ char classify(DataPoint test_point, DataPoint *data, int size) {
         neighbors[i].label = data[i].label;
     }
 
-    qsort(neighbors, size, sizeof(Neighbor), compare);
+    qsort(neighbors, (size_t)size, sizeof(Neighbor), compare);
 
     int countP = 0, countH = 0;
     for (int i = 0; i < K; i++) {
@@ -78,35 +111,6 @@ char classify(DataPoint test_point, DataPoint *data, int size) {
     }
 
     return (countP > countH) ? 'P' : 'H';
-}
-
-// Leitura do CSV
-void loadCSV(const char *filename) {
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        printf("Erro ao abrir o arquivo.\n");
-        exit(1);
-    }
-
-    char line[1024];
-    while (fgets(line, sizeof(line), file)) {
-        char *token;
-        token = strtok(line, ",");
-        int feature_index = 0;
-
-        while (token != NULL && feature_index < FEATURES) {
-            dataset[total_samples].features[feature_index++] = atof(token);
-            token = strtok(NULL, ",");
-        }
-
-        if (token != NULL) {
-            dataset[total_samples].label = token[0];  // Assume 'P' ou 'H'
-        }
-
-        total_samples++;
-    }
-
-    fclose(file);
 }
 
 // Avaliação de acurácia (Leave-One-Out)
@@ -133,20 +137,7 @@ void evaluateModel() {
     }
 
     double accuracy = (double)correct / total_samples * 100.0;
-    printf("Acurácia do modelo: %.2f%%\n", accuracy);
+    printf("Acurácia do modelo: %.5f%%\n", accuracy);
 }
 
-// Função Principal
-int main() {
-    loadCSV("DARWIN.csv");
 
-    printf("Total de amostras carregadas: %d\n", total_samples);
-
-    double min[FEATURES], max[FEATURES];
-    computeMinMax(dataset, total_samples, min, max);
-    normalize(dataset, total_samples, min, max);
-
-    evaluateModel();
-
-    return 0;
-}
