@@ -30,28 +30,49 @@ void loadCSV(const char *filename)
     }
 
     char line[10000];
+
+    fgets(line, sizeof(line), file);
+
+    int columns = 0;
+    for (int i = 0; line[i] != '\0'; i++) {
+        if (line[i] == ',') columns++;
+    }
+    int num_features = columns - 1; // -1 porque 1 é o ID e 1 é a label
+
     while (fgets(line, sizeof(line), file))
     {
         char *token;
-        int feature_index = 0;
 
         token = strtok(line, ","); // Ignora o ID
-        token = strtok(NULL, ",");
-
-        while (token != NULL && feature_index < FEATURES)
+        // Lê as features
+        for (int f = 0; f < num_features; f++)
         {
-            dataset[total_samples].features[feature_index++] = atof(token);
             token = strtok(NULL, ",");
+            if (token == NULL)
+            {
+                printf("Erro ao ler feature na linha %d\n", total_samples + 1);
+                exit(1);
+            }
+            dataset[total_samples].features[f] = atof(token);
         }
 
-        // Aqui você pode definir um label padrão ou ler de outro lugar, se necessário
-        dataset[total_samples].label = 'P'; // Exemplo: sempre 'P'
+        // Lê a label (última coluna)
+        token = strtok(NULL, ",\n\r");
+        if (token == NULL)
+        {
+            printf("Erro ao ler label na linha %d\n", total_samples + 1);
+            exit(1);
+        }
+        dataset[total_samples].label = token[0]; // 'P' ou 'H'
+
 
         total_samples++;
     }
 
     fclose(file);
 }
+
+
 // Funções para Normalização
 void computeMinMax(DataPoint *data, int size, double *min, double *max)
 {
