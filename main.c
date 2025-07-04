@@ -218,29 +218,29 @@ void evaluateModel()
     printf("Real P     %10d   %10d\n", confusion[0][0], confusion[0][1]);
     printf("Real H     %10d   %10d\n", confusion[1][0], confusion[1][1]);
 
-    // 1. Calcula e matriz de acuracia
+    // 1. Calcula e matriz de confusao
     int TP = confusion[0][0];
     int FN = confusion[0][1];
     int FP = confusion[1][0];
     int TN = confusion[1][1];
 
-    // 2. erro de previsão
-    double accuracy = (double)(TP + TN) / total_samples * 100.0;
-    printf("Acuracia do modelo: %.5f%%\n", accuracy);
-
-    // 3. Calcula e imprime o erro de previsao
+    // 2. erro de previsao
     double erro = (double)(FP + FN) / (TP + TN + FP + FN);
     printf("Erro de previsao: %.5f\n", erro);
 
-    // 4. Calcula e imprime a precisao (Precision)
+    // 3. acuracia
+    double accuracy = 1.0f - erro;
+    printf("Acuracia do modelo: %.5f\n", accuracy);
+
+    // 4. precisao
     double precision = (TP + FP) ? (double)TP / (TP + FP) : 0.0;
     printf("Precisao: %.5f\n", precision);
 
-    // 5. Calcula e imprime o recall
+    // 5. recall
     double recall = (TP + FN) ? (double)TP / (TP + FN) : 0.0;
     printf("Recall: %.5f\n", recall);
 
-    // 6. Calcula e imprime o F1-score
+    // 6. F1-score
     double f1 = (precision + recall) ? (2 * precision * recall) / (precision + recall) : 0.0;
     printf("F1_score: %.5f\n", f1);
 }
