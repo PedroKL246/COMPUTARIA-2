@@ -184,7 +184,7 @@ char classify(DataPoint test_point, DataPoint *data, int size)
 // Funcao para avaliar o modelo usando Leave-One-Out (cada amostra e testada uma vez)
 void evaluateModel()
 {
-    int correct = 0;
+    int confusion[2][2] = {0};
 
     for (int i = 0; i < total_samples; i++)
     {
@@ -205,14 +205,42 @@ void evaluateModel()
 
         // Classifica a amostra de teste
         char predicted = classify(test_point, train_set, train_size);
-        // Conta se acertou
-        if (predicted == test_point.label)
-        {
-            correct++;
-        }
+
+        // Atualiza a matriz de confusao
+        int real = (test_point.label == 'P') ? 0 : 1;
+        int pred = (predicted == 'P') ? 0 : 1;
+        confusion[real][pred]++;
     }
 
-    // Calcula e imprime a acuracia
-    double accuracy = (double)correct / total_samples * 100.0;
+    // Imprime a matriz de confusao
+    printf("\nMatriz de confusao:\n");
+    printf("           Previsto P   Previsto H\n");
+    printf("Real P     %10d   %10d\n", confusion[0][0], confusion[0][1]);
+    printf("Real H     %10d   %10d\n", confusion[1][0], confusion[1][1]);
+
+    // 1. Calcula e matriz de acuracia
+    int TP = confusion[0][0];
+    int FN = confusion[0][1];
+    int FP = confusion[1][0];
+    int TN = confusion[1][1];
+
+    // 2. erro de previsão
+    double accuracy = (double)(TP + TN) / total_samples * 100.0;
     printf("Acuracia do modelo: %.5f%%\n", accuracy);
+
+    // 3. Calcula e imprime o erro de previsao
+    double erro = (double)(FP + FN) / (TP + TN + FP + FN);
+    printf("Erro de previsao: %.5f\n", erro);
+
+    // 4. Calcula e imprime a precisao (Precision)
+    double precision = (TP + FP) ? (double)TP / (TP + FP) : 0.0;
+    printf("Precisao: %.5f\n", precision);
+
+    // 5. Calcula e imprime o recall
+    double recall = (TP + FN) ? (double)TP / (TP + FN) : 0.0;
+    printf("Recall: %.5f\n", recall);
+
+    // 6. Calcula e imprime o F1-score
+    double f1 = (precision + recall) ? (2 * precision * recall) / (precision + recall) : 0.0;
+    printf("F1_score: %.5f\n", f1);
 }
